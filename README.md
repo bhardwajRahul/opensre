@@ -75,7 +75,7 @@ Root cause reports are delivered to Slack out of the box. Want them in PagerDuty
 
 ## How Tracer Works
 
-<img width="2444" height="881" alt="How it works" src="https://github.com/user-attachments/assets/dd79d5ab-e2a4-4ddf-a869-7afa4d7a10dc" />
+<img width="4096" height="2187" alt="tracer-how-it-works-illustration" src="https://github.com/user-attachments/assets/8b50fe5c-470c-4982-866f-4f90c3e251d1" />
 
 ### Investigation Workflow
 
