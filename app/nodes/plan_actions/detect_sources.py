@@ -669,6 +669,30 @@ def detect_sources(
                 "connection_verified": True,
             }
 
+    mongodb_int = (resolved_integrations or {}).get("mongodb")
+    if mongodb_int:
+        mongodb_connection_string = str(mongodb_int.get("connection_string", "")).strip()
+        if mongodb_connection_string:
+            mongodb_database = str(
+                annotations.get("mongodb_database")
+                or annotations.get("database")
+                or mongodb_int.get("database", "")
+            ).strip()
+            mongodb_collection = str(
+                annotations.get("mongodb_collection")
+                or annotations.get("collection")
+                or ""
+            ).strip()
+            sources["mongodb"] = {
+                "connection_string": mongodb_connection_string,
+                "database": mongodb_database,
+                "collection": mongodb_collection,
+                "auth_source": str(mongodb_int.get("auth_source", "admin")).strip(),
+                "tls": mongodb_int.get("tls", True),
+                "connection_verified": True,
+            }
+
+
     opsgenie_int = (resolved_integrations or {}).get("opsgenie")
     if opsgenie_int and str(opsgenie_int.get("api_key", "")).strip():
         alert_id = str(

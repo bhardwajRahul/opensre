@@ -42,12 +42,14 @@ _SETUP_SERVICES = [
     "datadog",
     "grafana",
     "honeycomb",
+    "mongodb",
     "opensearch",
     "rds",
     "slack",
     "tracer",
 ]
-_VERIFY_SERVICES = ["aws", "coralogix", "datadog", "grafana", "honeycomb", "opsgenie", "slack", "tracer", "vercel"]
+
+_VERIFY_SERVICES = ["aws", "coralogix", "datadog", "grafana", "honeycomb",  "mongodb", "opsgenie", "slack", "tracer", "vercel"]
 
 
 _ASCII_HEADER = """\
@@ -258,14 +260,14 @@ def integrations() -> None:
 
 
 @integrations.command()
-@click.argument("service", type=click.Choice(_SETUP_SERVICES))
-def setup(service: str) -> None:
+@click.argument("service", required=False, default=None, type=click.Choice(_SETUP_SERVICES))
+def setup(service: str | None) -> None:
     """Set up credentials for a service."""
     from app.integrations.cli import cmd_setup
 
-    capture_integration_setup_started(service)
+    capture_integration_setup_started(service or "prompt")
     cmd_setup(service)
-    capture_integration_setup_completed(service)
+    capture_integration_setup_completed(service or "prompt")
 
 
 @integrations.command(name="list")
