@@ -821,6 +821,13 @@ Thanks goes to these amazing people:
             <sub><b>wahajahmed010</b></sub>
         </a>
     </td>
+            <td align="center">
+        <a href="https://github.com/Ade20boss">
+            <img src="https://avatars.githubusercontent.com/u/168012500?v=4" width="100" alt="Ade20boss"/>
+            <br />
+            <sub><b>Ade20boss</b></sub>
+        </a>
+    </td>
 		</tr>
 	</tbody>
 </table>
