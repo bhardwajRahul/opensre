@@ -872,6 +872,13 @@ Thanks goes to these amazing people:
             <sub><b>7vignesh</b></sub>
         </a>
     </td>
+            <td align="center">
+        <a href="https://github.com/turancannb02">
+            <img src="https://avatars.githubusercontent.com/u/131914656?v=4" width="100" alt="turancannb02"/>
+            <br />
+            <sub><b>turancannb02</b></sub>
+        </a>
+    </td>
 		</tr>
 	</tbody>
 </table>
