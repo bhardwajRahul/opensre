@@ -17,8 +17,7 @@ def test_get_logs_default_size():
     client.get_logs()
 
     client._get.assert_called_once_with(
-        "/api/opensearch/logs",
-        {"orgId": "test_org_123", "size": 100}
+        "/api/opensearch/logs", {"orgId": "test_org_123", "size": 100}
     )
 
 
@@ -28,8 +27,7 @@ def test_get_logs_trace_id_precedence():
     client.get_logs(trace_id="trace_abc", run_id="run_xyz")
 
     client._get.assert_called_once_with(
-        "/api/opensearch/logs",
-        {"orgId": "test_org_123", "size": 100, "runId": "trace_abc"}
+        "/api/opensearch/logs", {"orgId": "test_org_123", "size": 100, "runId": "trace_abc"}
     )
 
 
@@ -39,6 +37,5 @@ def test_get_logs_run_id_fallback():
     client.get_logs(run_id="run_xyz")
 
     client._get.assert_called_once_with(
-        "/api/opensearch/logs",
-        {"orgId": "test_org_123", "size": 100, "runId": "run_xyz"}
+        "/api/opensearch/logs", {"orgId": "test_org_123", "size": 100, "runId": "run_xyz"}
     )
