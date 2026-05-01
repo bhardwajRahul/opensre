@@ -48,7 +48,7 @@
 - [Why OpenSRE?](#why-opensre)
 - [Install](#install)
 - [Quick Start](#quick-start)
-- [Railway Deployment](#railway-deployment)
+- [Official Deployment (LangGraph)](#official-deployment-langgraph-platform)
 - [Development](#development)
 - [How OpenSRE Works](#how-opensre-works)
 - [Benchmark](#benchmark)
@@ -144,12 +144,37 @@ Slash commands: `/help`, `/status`, `/clear`, `/reset`, `/trust`, `/exit`. Ctrl+
 
 ---
 
-## Railway Deployment
+## Official Deployment: LangGraph Platform
+
+OpenSRE's official deployment path is LangGraph Platform.
+
+1. Create a deployment on LangGraph Platform and connect this repository.
+2. Keep `langgraph.json` at the repo root so LangGraph can load the graph entrypoint.
+3. Add your model provider in environment variables (for example `LLM_PROVIDER=anthropic`).
+4. Add the matching API key for your provider (for example `ANTHROPIC_API_KEY` or
+   `OPENAI_API_KEY`).
+5. Add any additional runtime env vars your deployment needs (for example integration
+   credentials and optional storage settings).
+
+Minimum LLM env setup:
+
+```bash
+LLM_PROVIDER=anthropic
+ANTHROPIC_API_KEY=...
+```
+
+For other providers, set the same `LLM_PROVIDER` plus the matching key from
+`.env.example` (for example `OPENAI_API_KEY`, `GEMINI_API_KEY`, or
+`OPENROUTER_API_KEY`).
+
+## Railway Deployment (Self-Hosted Alternative)
+
+If you prefer a self-hosted path, you can still deploy to Railway.
 
 Before running `opensre deploy railway`, make sure the target Railway project has
 both Postgres and Redis services, and that your OpenSRE service has `DATABASE_URI`
-and `REDIS_URI` set to those connection strings. The containerized LangGraph
-runtime will not boot without those backing services wired in.
+and `REDIS_URI` set to those connection strings. The containerized LangGraph runtime
+will not boot without those backing services wired in.
 
 ```bash
 # create/link Railway Postgres and Redis first, then set DATABASE_URI and REDIS_URI

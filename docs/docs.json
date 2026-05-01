@@ -33,7 +33,7 @@
           },
           {
             "group": "First steps",
-            "pages": ["quickstart", "faq"]
+            "pages": ["quickstart", "deployment", "faq"]
           }
         ]
       },
