@@ -104,7 +104,8 @@ curl -fsSL https://install.opensre.com | bash -s -- --main
 ```
 
 ```bash
-brew install Tracer-Cloud/opensre/opensre
+brew tap tracer-cloud/tap
+brew install tracer-cloud/tap/opensre
 ```
 
 ```powershell

@@ -395,7 +395,8 @@ jobs:
             echo "### Homebrew (macOS / Linux)"
             echo
             echo '```bash'
-            echo "brew install ${{ github.repository }}/opensre"
+            echo 'brew tap tracer-cloud/tap'
+            echo 'brew install tracer-cloud/tap/opensre'
             echo '```'
             echo
             echo "### PowerShell (Windows)"
