@@ -48,6 +48,7 @@ jobs:
     outputs:
       channel: ${{ steps.meta.outputs.channel }}
       tag_name: ${{ steps.meta.outputs.tag_name }}
+      version_name: ${{ steps.meta.outputs.version_name }}
 
     steps:
       - uses: actions/checkout@v5
@@ -80,8 +81,15 @@ jobs:
               exit 1
             fi
 
+            year="$(date -u +%Y)"
+            month="$(date -u +%-m)"
+            day="$(date -u +%-d)"
+            short_sha="${GITHUB_SHA:0:7}"
+            main_version="0.1.${year}.${month}.${day}+main.${short_sha}"
+
             echo "channel=main" >> "$GITHUB_OUTPUT"
             echo "tag_name=main-build" >> "$GITHUB_OUTPUT"
+            echo "version_name=${main_version}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -98,6 +106,7 @@ jobs:
 
           echo "channel=release" >> "$GITHUB_OUTPUT"
           echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
+          echo "version_name=${tag_name#v}" >> "$GITHUB_OUTPUT"
 
   verify:
     runs-on: ubuntu-latest
@@ -157,7 +166,7 @@ jobs:
 
       - name: Sync release version
         shell: bash
-        run: python .github/scripts/sync-release-version.py --tag "$TAG_NAME"
+        run: python infra/deployment/packaging/sync_release_version.py --tag "$TAG_NAME"
 
       - name: Build Python distributions
         run: |
@@ -215,6 +224,7 @@ jobs:
     env:
       RELEASE_CHANNEL: ${{ needs.prepare.outputs.channel }}
       TAG_NAME: ${{ needs.prepare.outputs.tag_name }}
+      VERSION_NAME: ${{ needs.prepare.outputs.version_name }}
 
     steps:
       - uses: actions/checkout@v5
@@ -232,10 +242,9 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Sync release version
-        if: env.RELEASE_CHANNEL == 'release'
+      - name: Sync binary version
         shell: bash
-        run: python .github/scripts/sync-release-version.py --tag "$TAG_NAME"
+        run: python infra/deployment/packaging/sync_release_version.py --version "$VERSION_NAME"
 
       - name: Install binary build dependencies
         shell: bash
@@ -282,16 +291,13 @@ jobs:
             printf '::error::%s --version exited with status %s\n' "${{ matrix.binary_name }}" "$VERSION_STATUS" >&2
             exit "$VERSION_STATUS"
           fi
-          if [ "$RELEASE_CHANNEL" = "release" ]; then
-            VERSION="${TAG_NAME#v}"
-            case "$VERSION_OUTPUT" in
-              *"$VERSION"*) ;;
-              *)
-                printf 'Binary version mismatch: expected %s but saw %s\n' "$VERSION" "$VERSION_OUTPUT" >&2
-                exit 1
-                ;;
-            esac
-          fi
+          case "$VERSION_OUTPUT" in
+            *"$VERSION_NAME"*) ;;
+            *)
+              printf 'Binary version mismatch: expected %s but saw %s\n' "$VERSION_NAME" "$VERSION_OUTPUT" >&2
+              exit 1
+              ;;
+          esac
           ./dist/${{ matrix.binary_name }} -h >/dev/null
 
       - name: Smoke test binary (Windows)
@@ -301,11 +307,9 @@ jobs:
           $versionOutput = & ".\dist\${{ matrix.binary_name }}" --version 2>&1 | Out-String
           $versionText = $versionOutput.Trim()
           Write-Host $versionText
-          if ($env:RELEASE_CHANNEL -eq "release") {
-            $expectedVersion = $env:TAG_NAME.TrimStart("v")
-            if ($versionText -notmatch [regex]::Escape($expectedVersion)) {
-              throw "Binary version mismatch. Expected '$expectedVersion' but saw '$versionText'."
-            }
+          $expectedVersion = $env:VERSION_NAME
+          if ($versionText -notmatch [regex]::Escape($expectedVersion)) {
+            throw "Binary version mismatch. Expected '$expectedVersion' but saw '$versionText'."
           }
           & ".\dist\${{ matrix.binary_name }}" -h | Out-Null
 
@@ -565,6 +569,8 @@ jobs:
           merge-multiple: true
 
       - name: Create release notes
+        env:
+          VERSION_NAME: ${{ needs.prepare.outputs.version_name }}
         shell: bash
         run: |
           set -euo pipefail
@@ -574,7 +580,7 @@ jobs:
           CB='```'
           {
             printf '## Main build\n\nRolling binary build from `main`.\n\n'
-            printf -- '- Commit: `%s`\n- Built: %s\n\n' "$short_sha" "$built_at"
+            printf -- '- Version: `%s`\n- Commit: `%s`\n- Built: %s\n\n' "$VERSION_NAME" "$short_sha" "$built_at"
             printf '### Install\n\nmacOS / Linux:\n\n%sbash\ncurl -fsSL https://install.opensre.com | bash\n%s\n\n' "$CB" "$CB"
             printf 'Equivalent explicit main channel:\n\n%sbash\ncurl -fsSL https://install.opensre.com | bash -s -- --main\n%s\n\n' "$CB" "$CB"
             printf 'Windows:\n\n%spowershell\nirm https://install.opensre.com | iex\n%s\n' "$CB" "$CB"

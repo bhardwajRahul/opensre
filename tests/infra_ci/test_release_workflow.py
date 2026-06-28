@@ -28,3 +28,22 @@ def test_main_binary_publish_runs_when_verify_is_skipped_on_push() -> None:
         "if: always() && needs.prepare.outputs.channel == 'main' && "
         "needs.build-binaries.result == 'success'"
     ) in source
+
+
+def test_main_build_has_distinct_binary_version() -> None:
+    source = _RELEASE_WORKFLOW.read_text()
+
+    assert "version_name: ${{ steps.meta.outputs.version_name }}" in source
+    assert 'main_version="0.1.${year}.${month}.${day}+main.${short_sha}"' in source
+    assert "version_name=${main_version}" in source
+
+
+def test_binary_build_syncs_and_smokes_expected_version() -> None:
+    source = _RELEASE_WORKFLOW.read_text()
+
+    assert "VERSION_NAME: ${{ needs.prepare.outputs.version_name }}" in source
+    assert "Sync binary version" in source
+    assert 'sync_release_version.py --version "$VERSION_NAME"' in source
+    assert 'sync_release_version.py --tag "$TAG_NAME"' in source
+    assert "Binary version mismatch: expected %s but saw %s" in source
+    assert "$VERSION_NAME" in source
