@@ -322,3 +322,28 @@ def test_spec_without_a_verifier_still_configures(recorder: _Recorder) -> None:
     assert outcome.ok is True
     assert outcome.detail == ""
     assert recorder.saved != []
+
+
+def test_finalize_hook_runs_after_persist_and_appends_its_note(recorder: _Recorder) -> None:
+    saved_before_finalize: list[bool] = []
+
+    def _finalize(_credentials: dict[str, str | None]) -> str:
+        # The store write has already happened by the time finalize runs.
+        saved_before_finalize.append(bool(recorder.saved))
+        return "Side effect done."
+
+    spec = dataclasses.replace(_SPEC, finalize=_finalize)
+
+    outcome = setup_flow.apply_setup(spec, {"api_token": "tok-1", "room": "ops"})
+
+    assert outcome.ok is True
+    assert outcome.detail == "Demo connected. Side effect done."
+    assert saved_before_finalize == [True]
+
+
+def test_finalize_note_is_omitted_when_empty(recorder: _Recorder) -> None:
+    spec = dataclasses.replace(_SPEC, finalize=lambda _credentials: "")
+
+    outcome = setup_flow.apply_setup(spec, {"api_token": "tok-1", "room": "ops"})
+
+    assert outcome.detail == "Demo connected."

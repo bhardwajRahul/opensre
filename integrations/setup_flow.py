@@ -6,11 +6,16 @@ interactive-shell action tools. Each one only differs in how it *collects*
 values; what has to happen afterwards is identical:
 
 1. every required field is present,
-2. the credentials actually work (the integration's verifier),
+2. the credentials actually work (the integration's verifier — which is also
+   where a rule spanning several fields belongs, so an incomplete combination
+   is rejected by the same prober that runs on health checks),
 3. references the user typed are resolved to what the runtime needs (optional,
-   integration-specific — see :attr:`IntegrationSetupSpec.resolve`), and
+   integration-specific — see :attr:`IntegrationSetupSpec.resolve`),
 4. they are persisted to **every** tier that reads them — the integration
-   store, the system keyring for secrets, and the project ``.env`` for the rest.
+   store, the system keyring for secrets, and the project ``.env`` for the rest,
+   and
+5. any post-save side effect runs (optional — see
+   :attr:`IntegrationSetupSpec.finalize`).
 
 Before this module each surface reimplemented step 4, and they disagreed: the
 wizard wrote all three tiers while ``integrations setup`` wrote only the store.
@@ -48,6 +53,12 @@ class ResolvedCredentials:
 
 
 ResolveFn = Callable[[dict[str, str | None]], ResolvedCredentials]
+
+# Side effect run after the credentials are persisted, for setup that has to
+# reach past the store (registering a webhook, a slash command, …). Returns an
+# optional note appended to the success detail; it is best-effort by contract —
+# the integration is already saved, so a failure here is surfaced, not unwound.
+FinalizeFn = Callable[[dict[str, str | None]], str]
 
 
 @dataclass(frozen=True)
@@ -133,6 +144,16 @@ class IntegrationSetupSpec:
     before anything is persisted. Use it when what the user can reasonably type
     is not what the runtime should store — Telegram's ``@channelname`` becoming
     a numeric chat id, for instance.
+    """
+
+    finalize: FinalizeFn | None = None
+    """Optional side effect run after the credentials are persisted.
+
+    For setup that has to reach past the store once the integration exists —
+    Discord registering its ``/investigate`` slash command, for example. Runs
+    last so it can assume a saved, verified integration, and is best-effort: it
+    returns a note for the success detail and a failure is surfaced there rather
+    than rolling back the save.
     """
 
 
@@ -249,10 +270,16 @@ def apply_setup(
         return SetupOutcome(ok=False, detail=f"Could not save {spec.service} credentials: {exc}")
 
     upsert_integration(spec.service, {"credentials": credentials})
+
+    if spec.finalize is not None:
+        note = spec.finalize(credentials)
+        detail = " ".join(part for part in (detail, note) if part)
+
     return SetupOutcome(ok=True, detail=detail, env_path=env_path)
 
 
 __all__ = [
+    "FinalizeFn",
     "IntegrationSetupSpec",
     "ResolveFn",
     "ResolvedCredentials",
